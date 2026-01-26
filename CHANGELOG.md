@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-01-26)
+
+### Chores
+
+- Обновлен текст лицензии MIT
+  ([`f4d9f8b`](https://github.com/hatab2010/fundingbot-sdk/commit/f4d9f8b05827a6d60cb01954684b31d2e55f4408))
+
+### Features
+
+- Добавлены новые классы ошибок и обновлены аннотации типов
+  ([`69fba32`](https://github.com/hatab2010/fundingbot-sdk/commit/69fba321800710f223212ebe26fa20aa6172842b))
+
+### Refactoring
+
+- Перенесены адаптеры ответов в класс CcxtClient
+  ([`a377570`](https://github.com/hatab2010/fundingbot-sdk/commit/a3775702b93a23a61cc3094919d2c18937678938))
+
+
 ## v1.1.0 (2025-10-16)
 
 ### Bug Fixes
