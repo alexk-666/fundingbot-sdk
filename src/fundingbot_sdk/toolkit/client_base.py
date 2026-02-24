@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import contextvars
+import json
 import logging
 import re
 import types
@@ -209,7 +210,7 @@ class CcxtClient(CexClientPort):
             try:
                 position = self._position_info_adapter.validate_python(item)
             except ValidationError as e:
-                raise PositionUnavailableError(symbol=item.get("symbol"), exchange=self.cex_id) from e
+                raise PositionUnavailableError(symbol=item.get("symbol"), exchange=self.cex_id, details=json.dumps(e.json())) from e
 
             filtered.append(position)
 

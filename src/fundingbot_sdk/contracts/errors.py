@@ -129,13 +129,15 @@ class FundingRateUnavailableError(RetryableExchangeError):
 class PositionUnavailableError(RetryableExchangeError):
     """Отсутствуют корректные данные о позиции по инструменту."""
 
+    details: str | None = None
+
     def __post_init__(self) -> None:
         """Установить код ошибки для отсутствующей позиции."""
         self.error_code = ErrorCode.POSITION_UNAVAILABLE
 
     def __str__(self) -> str:
         """Вернуть человекочитаемое представление ошибки."""
-        return f"Нет позиции для {self.symbol} на {self.exchange}"
+        return f"Нет позиции для {self.symbol} на {self.exchange}: {self.details}"
 
 
 @dataclass(slots=True)
