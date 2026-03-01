@@ -39,6 +39,7 @@ class CexClientConfig:
     uid: str | None = None
     default_type: str = "swap"
     rate_limiter: RateLimiterPort | None = None
+    symbol_converter: SymbolConverter | None = None
     options: dict[str, Any] | None = None
 
 
