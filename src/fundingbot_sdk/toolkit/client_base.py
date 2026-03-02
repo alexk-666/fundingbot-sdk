@@ -203,17 +203,16 @@ class CcxtClient(CexClientPort):
 
     @override
     @map_sdk_errors
-    async def get_positions(
-        self,
-        symbols: list[str],
-        params: dict[str, Any] | None = None
-    ) ->  Sequence[PositionProtocol]:
-        data = await self._exchange.fetch_positions(symbols=symbols, params=params or {})
+    async def get_positions(self, symbols: list[str], params: dict[str, Any] | None = None) -> Sequence[PositionProtocol]:
+        symbol_converter = self.get_symbol_converter()
+        fiat_quote_symbols = [symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol) for symbol in symbols]
+        data = await self._exchange.fetch_positions(symbols=fiat_quote_symbols, params=params or {})
 
         filtered: list[CCXTPositionInfoResponse] = []
         for item in data:
             if item.get("contracts") == 0 or item.get("side") is None:
                 continue
+            item["symbol"] = self.get_symbol_converter().quote_from_fiat_to_stable_coin_if_needed(item["symbol"])
             try:
                 position = self._position_info_adapter.validate_python(item)
             except ValidationError as e:
@@ -253,7 +252,6 @@ class CcxtClient(CexClientPort):
         symbol_converter = self.get_symbol_converter()
         native_symbol = symbol_converter.from_standard_to_native(symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol))
         tpsl_orders = await self._exchange.fetch_open_orders(native_symbol)
-        #tpsl_orders = await self._exchange.fetch_open_orders("PF_XBTUSD")
         try:
             return self._trigger_order_list_adapter.validate_python(tpsl_orders)
         except ValidationError as e:
@@ -374,10 +372,11 @@ class CcxtClient(CexClientPort):
         params: dict[str, Any] | None = None,
         margin_mode: str = "isolated",
     ) -> OrderEntityProtocol:
+        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         params = dict(params or {})
         params["marginMode"] = margin_mode
         data = await self._exchange.create_order(
-            symbol=symbol, type=order_type, side=side, amount=amount, price=price, params=params
+            symbol=fiat_quote_symbol, type=order_type, side=side, amount=amount, price=price, params=params
         )
         try:
             return self._create_order_response_adapter.validate_python(data)
