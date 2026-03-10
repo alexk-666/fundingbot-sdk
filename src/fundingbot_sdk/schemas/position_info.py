@@ -20,7 +20,7 @@ class PositionInfoResponse(ResponseBase):
     entry_price: Decimal = Field(..., description="Цена входа", validation_alias="entryPrice")
     hedged: bool | None = Field(None, description="Хеджированный режим", validation_alias="hedged")
     leverage: Decimal = Field(..., description="Кредитное плечо", validation_alias="leverage")
-    liquidation_price: Decimal|None = Field(None, description="Цена ликвидации", validation_alias="liquidationPrice")
+    liquidation_price: Decimal | None = Field(None, description="Цена ликвидации", validation_alias="liquidationPrice")
     notional: Decimal | None = Field(..., description="Нотиональная стоимость", validation_alias="notional")
     side: str = Field(..., description="Направление", validation_alias="side")
     margin_mode: str | None = Field(default=None, description="Режим маржи", validation_alias="marginMode")

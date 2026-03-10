@@ -35,7 +35,7 @@ class ErrorCode(Enum):
     TRIGGER_ORDERS_UNAVAILABLE = "trigger_orders_unavailable"
     ORDER_UNAVAILABLE = "order_unavailable"
     BALANCE_UNAVAILABLE = "balance_unavailable"
-    FEE_UNAVAILABLE = "fee_unavailable",
+    FEE_UNAVAILABLE = "fee_unavailable"
     CLOSE_POSITION_REPORT_UNAVAILABLE = "close_position_report_unavailable"
 
 
