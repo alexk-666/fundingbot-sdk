@@ -22,6 +22,7 @@ from fundingbot_sdk.contracts.protocols import (
     TickerProtocol,
     TriggerOrderProtocol,
 )
+from fundingbot_sdk.toolkit.symbol_converter import SymbolConverter
 
 
 @dataclass

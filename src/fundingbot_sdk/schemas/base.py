@@ -40,7 +40,9 @@ class BaseSchema(BaseModel):
     ),
     frozen=True
 )
-class ResponseBase(ABC):
+class ResponseBase(ABC):  # noqa: B024
+    """Базовый класс ответов на запросы."""
+
     @field_serializer("*", when_used="json")
     def _serialize_decimal(self, v: Any) -> Any:  # noqa: ANN401, PLR6301
         if isinstance(v, Decimal):

@@ -42,7 +42,7 @@ from fundingbot_sdk.schemas.order import CreateOrderResponse, TriggerOrderRespon
 from fundingbot_sdk.schemas.position_info import CCXTPositionInfoResponse
 from fundingbot_sdk.schemas.ticker import TickerResponse
 from fundingbot_sdk.toolkit.error_mapper import map_sdk_errors
-from fundingbot_sdk.toolkit.symbol_converter import SymbolConverter, DefaultSymbolConverter
+from fundingbot_sdk.toolkit.symbol_converter import DefaultSymbolConverter, SymbolConverter
 
 if TYPE_CHECKING:
     from fundingbot_sdk.contracts.ports.cex_client import CexClientConfig
@@ -113,7 +113,9 @@ def is_preacquired() -> bool:
     """Проверить, помечена ли текущая операция как предварительно захваченная."""
     return _preacquired.get()
 
+
 DEFAULT_SYMBOL_CONVERTER = DefaultSymbolConverter()
+
 
 class CcxtClient(CexClientPort):
     """Реализация ``CexClientPort`` на базе ``ccxt.async_support``.
@@ -162,7 +164,7 @@ class CcxtClient(CexClientPort):
             self._exchange.set_sandbox_mode(True)
         self._patch_request()
 
-    def get_symbol_converter(self) -> SymbolConverter:
+    def get_symbol_converter(self) -> SymbolConverter:  # noqa: PLR6301, D102
         return DEFAULT_SYMBOL_CONVERTER
 
     @final
