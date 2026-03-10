@@ -207,7 +207,6 @@ class CcxtClient(CexClientPort):
         for item in data:
             if item.get("contracts") == 0 or item.get("side") is None:
                 continue
-            item["symbol"] = self.get_symbol_converter().quote_from_fiat_to_stable_coin_if_needed(item["symbol"])
             try:
                 position = self._position_info_adapter.validate_python(item)
             except ValidationError as e:
@@ -314,7 +313,6 @@ class CcxtClient(CexClientPort):
     async def set_margin_mode(
         self, *, margin_mode: str, symbol: str | None = None, params: dict[str, Any] | None = None
     ) -> None:
-    async def set_margin_mode(self, *, margin_mode: str, symbol: str | None = None, params: dict[str, Any] | None = None) -> None:
         await self._exchange.set_margin_mode(margin_mode, symbol, params or {})
 
     @override
@@ -337,9 +335,8 @@ class CcxtClient(CexClientPort):
         stop_loss: Decimal,
         margin_mode: str = "isolated",
     ) -> OrderEntityProtocol:
-        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         data = await self._exchange.create_order(
-            symbol=fiat_quote_symbol,
+            symbol=symbol,
             side=side,
             type=order_type,
             amount=amount,
