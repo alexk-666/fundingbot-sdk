@@ -42,7 +42,6 @@ from fundingbot_sdk.schemas.order import CreateOrderResponse, TriggerOrderRespon
 from fundingbot_sdk.schemas.position_info import CCXTPositionInfoResponse
 from fundingbot_sdk.schemas.ticker import TickerResponse
 from fundingbot_sdk.toolkit.error_mapper import map_sdk_errors
-from fundingbot_sdk.toolkit.symbol_converter import DefaultSymbolConverter, SymbolConverter
 
 if TYPE_CHECKING:
     from fundingbot_sdk.contracts.ports.cex_client import CexClientConfig
@@ -114,9 +113,6 @@ def is_preacquired() -> bool:
     return _preacquired.get()
 
 
-DEFAULT_SYMBOL_CONVERTER = DefaultSymbolConverter()
-
-
 class CcxtClient(CexClientPort):
     """Реализация ``CexClientPort`` на базе ``ccxt.async_support``.
 
@@ -164,9 +160,6 @@ class CcxtClient(CexClientPort):
             self._exchange.set_sandbox_mode(True)
         self._patch_request()
 
-    def get_symbol_converter(self) -> SymbolConverter:  # noqa: PLR6301, D102
-        return DEFAULT_SYMBOL_CONVERTER
-
     @final
     @override
     async def acquire_permit(self, op: Callable[..., Awaitable[Any]]) -> RateLimitPermitProtocol:
@@ -194,9 +187,7 @@ class CcxtClient(CexClientPort):
     @override
     @map_sdk_errors
     async def get_ticker(self, symbol: str) -> TickerProtocol:
-        symbol_converter = self.get_symbol_converter()
-        native_symbol = symbol_converter.from_standard_to_native(symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol))
-        data = await self._exchange.fetch_ticker(native_symbol)
+        data = await self._exchange.fetch_ticker(symbol)
         try:
             dto = self._ticker_response_adapter.validate_python(data)
         except ValidationError as e:
@@ -205,10 +196,12 @@ class CcxtClient(CexClientPort):
 
     @override
     @map_sdk_errors
-    async def get_positions(self, symbols: list[str], params: dict[str, Any] | None = None) -> Sequence[PositionProtocol]:
-        symbol_converter = self.get_symbol_converter()
-        fiat_quote_symbols = [symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol) for symbol in symbols]
-        data = await self._exchange.fetch_positions(symbols=fiat_quote_symbols, params=params or {})
+    async def get_positions(
+        self,
+        symbols: list[str],
+        params: dict[str, Any] | None = None
+    ) ->  Sequence[PositionProtocol]:
+        data = await self._exchange.fetch_positions(symbols=symbols, params=params or {})
 
         filtered: list[CCXTPositionInfoResponse] = []
         for item in data:
@@ -234,10 +227,8 @@ class CcxtClient(CexClientPort):
     @override
     @map_sdk_errors
     async def get_instrument_info(self, symbol: str) -> InstrumentProtocol:
-        symbol_converter = self.get_symbol_converter()
-        fiat_quote_symbol = symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol)
         await self.load_markets()
-        data = self._exchange.markets.get(fiat_quote_symbol)
+        data = self._exchange.markets.get(symbol)
         if data is None:
             raise InstrumentUnavailableError(symbol=symbol, exchange=self.cex_id)
         dto_dict = {**data, "symbol": symbol}
@@ -251,9 +242,7 @@ class CcxtClient(CexClientPort):
     @override
     @map_sdk_errors
     async def get_trigger_orders(self, symbol: str) -> Sequence[TriggerOrderProtocol]:
-        symbol_converter = self.get_symbol_converter()
-        native_symbol = symbol_converter.from_standard_to_native(symbol_converter.quote_from_stable_coin_to_fiat_if_needed(symbol))
-        tpsl_orders = await self._exchange.fetch_open_orders(native_symbol)
+        tpsl_orders = await self._exchange.fetch_open_orders(symbol)
         try:
             return self._trigger_order_list_adapter.validate_python(tpsl_orders)
         except ValidationError as e:
@@ -322,6 +311,9 @@ class CcxtClient(CexClientPort):
 
     @override
     @map_sdk_errors
+    async def set_margin_mode(
+        self, *, margin_mode: str, symbol: str | None = None, params: dict[str, Any] | None = None
+    ) -> None:
     async def set_margin_mode(self, *, margin_mode: str, symbol: str | None = None, params: dict[str, Any] | None = None) -> None:
         await self._exchange.set_margin_mode(margin_mode, symbol, params or {})
 
@@ -330,8 +322,7 @@ class CcxtClient(CexClientPort):
     async def set_leverage(
         self, *, leverage: int, symbol: str | None = None, params: dict[str, Any] | None = None
     ) -> None:
-        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
-        await self._exchange.set_leverage(leverage, fiat_quote_symbol, params or {})
+        await self._exchange.set_leverage(leverage, symbol, params or {})
 
     @override
     @map_sdk_errors
@@ -346,8 +337,9 @@ class CcxtClient(CexClientPort):
         stop_loss: Decimal,
         margin_mode: str = "isolated",
     ) -> OrderEntityProtocol:
+        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         data = await self._exchange.create_order(
-            symbol=symbol,
+            symbol=fiat_quote_symbol,
             side=side,
             type=order_type,
             amount=amount,
@@ -374,11 +366,10 @@ class CcxtClient(CexClientPort):
         params: dict[str, Any] | None = None,
         margin_mode: str = "isolated",
     ) -> OrderEntityProtocol:
-        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         params = dict(params or {})
         params["marginMode"] = margin_mode
         data = await self._exchange.create_order(
-            symbol=fiat_quote_symbol, type=order_type, side=side, amount=amount, price=price, params=params
+            symbol=symbol, type=order_type, side=side, amount=amount, price=price, params=params
         )
         try:
             return self._create_order_response_adapter.validate_python(data)
