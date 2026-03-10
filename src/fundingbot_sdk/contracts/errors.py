@@ -35,7 +35,7 @@ class ErrorCode(Enum):
     TRIGGER_ORDERS_UNAVAILABLE = "trigger_orders_unavailable"
     ORDER_UNAVAILABLE = "order_unavailable"
     BALANCE_UNAVAILABLE = "balance_unavailable"
-    FEE_UNAVAILABLE = "fee_unavailable",
+    FEE_UNAVAILABLE = "fee_unavailable"
     CLOSE_POSITION_REPORT_UNAVAILABLE = "close_position_report_unavailable"
 
 
@@ -129,13 +129,15 @@ class FundingRateUnavailableError(RetryableExchangeError):
 class PositionUnavailableError(RetryableExchangeError):
     """Отсутствуют корректные данные о позиции по инструменту."""
 
+    details: str | None = None
+
     def __post_init__(self) -> None:
         """Установить код ошибки для отсутствующей позиции."""
         self.error_code = ErrorCode.POSITION_UNAVAILABLE
 
     def __str__(self) -> str:
         """Вернуть человекочитаемое представление ошибки."""
-        return f"Нет позиции для {self.symbol} на {self.exchange}"
+        return f"Нет позиции для {self.symbol} на {self.exchange}: {self.details}"
 
 
 @dataclass(slots=True)

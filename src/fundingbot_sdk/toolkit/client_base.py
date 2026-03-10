@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import contextvars
+import json
 import logging
 import re
 import types
@@ -209,7 +210,7 @@ class CcxtClient(CexClientPort):
             try:
                 position = self._position_info_adapter.validate_python(item)
             except ValidationError as e:
-                raise PositionUnavailableError(symbol=item.get("symbol"), exchange=self.cex_id) from e
+                raise PositionUnavailableError(symbol=item.get("symbol"), exchange=self.cex_id, details=json.dumps(e.json())) from e
 
             filtered.append(position)
 
@@ -240,7 +241,7 @@ class CcxtClient(CexClientPort):
     @override
     @map_sdk_errors
     async def get_trigger_orders(self, symbol: str) -> Sequence[TriggerOrderProtocol]:
-        tpsl_orders = await self._exchange.fetch_open_orders(symbol=symbol, params={"planType": "profit_loss"})
+        tpsl_orders = await self._exchange.fetch_open_orders(symbol)
         try:
             return self._trigger_order_list_adapter.validate_python(tpsl_orders)
         except ValidationError as e:
