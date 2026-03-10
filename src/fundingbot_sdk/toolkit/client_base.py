@@ -344,8 +344,9 @@ class CcxtClient(CexClientPort):
         stop_loss: Decimal,
         margin_mode: str = "isolated",
     ) -> OrderEntityProtocol:
+        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         data = await self._exchange.create_order(
-            symbol=symbol,
+            symbol=fiat_quote_symbol,
             side=side,
             type=order_type,
             amount=amount,
@@ -385,8 +386,9 @@ class CcxtClient(CexClientPort):
 
     @override
     def price_to_precision(self, symbol: str, price: Decimal) -> Decimal:
+        fiat_quote_symbol = self.get_symbol_converter().quote_from_stable_coin_to_fiat_if_needed(symbol)
         # ccxt может возвращать str/float; приводим к Decimal с сохранением точности
-        value = self._exchange.price_to_precision(symbol=symbol, price=price)
+        value = self._exchange.price_to_precision(symbol=fiat_quote_symbol, price=price)
         return Decimal(str(value))
 
     @override
