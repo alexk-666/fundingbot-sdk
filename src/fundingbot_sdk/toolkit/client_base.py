@@ -241,7 +241,7 @@ class CcxtClient(CexClientPort):
     @override
     @map_sdk_errors
     async def get_trigger_orders(self, symbol: str) -> Sequence[TriggerOrderProtocol]:
-        tpsl_orders = await self._exchange.fetch_open_orders(symbol)
+        tpsl_orders = await self._exchange.fetch_open_orders(symbol=symbol, params={"planType": "profit_loss"})
         try:
             return self._trigger_order_list_adapter.validate_python(tpsl_orders)
         except ValidationError as e:
